@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANALISI GRAMMATICALE</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; color: #111 !important; }
+  body {
+    font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+    background: #f0f4ff !important;
+    min-height: 100vh;
+    font-size: 22px;
+  }
+  .rainbow-header {
+    background: linear-gradient(90deg,#ff6b6b 0%,#ff9f43 16%,#ffd32a 32%,#26de81 48%,#45aaf2 64%,#a55eea 80%,#fd79a8 100%) !important;
+    padding: 18px 24px;
+    text-align: center;
+  }
+  .rainbow-header .h-title { font-size: 30px !important; font-weight: bold; color: #111 !important; letter-spacing: 1px; display: block; }
+  .rainbow-header .h-sub   { font-size: 15px !important; color: #222 !important; margin-top: 5px; font-weight: bold; letter-spacing: 1px; display: block; }
+
+  #app { padding: 20px; max-width: 780px; margin: 0 auto; }
+
+  .word-input-box {
+    background: #ffffff !important;
+    border: 4px solid #7F77DD;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .word-input-box label { font-size: 22px !important; font-weight: bold; color: #111 !important; white-space: nowrap; }
+  .word-input-box input {
+    flex: 1;
+    border: 3px solid #ccc;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 26px;
+    font-weight: bold;
+    font-family: inherit;
+    color: #111 !important;
+    background: #f9f9ff !important;
+    outline: none;
+  }
+  .word-input-box input:focus { border-color: #7F77DD; background: #ffffff !important; }
+  .word-input-box input::placeholder { color: #999 !important; }
+
+  #audio-status { text-align:center; font-size:15px; color:#888 !important; min-height:20px; margin-bottom:6px; font-style:italic; }
+
+  .top-bar { display:flex; align-items:center; gap:10px; margin-bottom:18px; min-height:52px; flex-wrap:wrap; }
+  .nav-btn {
+    background: #ffffff !important; border: 3px solid #aaa; border-radius: 14px;
+    padding: 12px 22px; font-size: 22px !important; font-weight: bold;
+    cursor: pointer; color: #111 !important; display: none; align-items: center;
+    gap: 6px; font-family: inherit;
+  }
+  .nav-btn:active { transform: scale(0.96); }
+  .nav-btn.fwd { background: #EEEDFE !important; border-color: #7F77DD; }
+  .breadcrumb { font-size:15px; color:#444 !important; font-weight:bold; flex:1; text-align:center; }
+
+  .grid { display:grid; gap:14px; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .btn {
+    border: 4px solid #ccc; border-radius: 16px; padding: 22px 12px;
+    font-size: 22px !important; font-weight: bold; cursor: pointer;
+    text-align: center; line-height: 1.4; min-height: 110px;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 8px; user-select: none;
+    transition: transform 0.1s; font-family: inherit; color: #111 !important;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn.selected-choice { box-shadow: 0 0 0 6px #ffd32a; }
+  .btn .icon  { font-size: 44px; display: block; }
+  .btn .forms { font-size: 17px !important; color: #222 !important; margin-top: 2px; }
+  .btn .hint  { font-size: 16px !important; color: #555 !important; font-style: italic; margin-top: 2px; font-weight: normal !important; }
+
+  .btn-nome  { border-color: #7F77DD !important; background: #EEEDFE !important; }
+  .btn-verbo { border-color: #0F6E56 !important; background: #E1F5EE !important; }
+  .btn-art   { border-color: #185FA5 !important; background: #E6F1FB !important; }
+  .btn-prep  { border-color: #BA7517 !important; background: #FAEEDA !important; }
+  .btn-agg   { border-color: #993556 !important; background: #FBEAF0 !important; }
+  .btn-muted { border-color: #bbb    !important; background: #f0f0f0 !important; }
+
+  .section-title { font-size:22px !important; font-weight:bold; color:#111 !important; margin-bottom:14px; }
+
+  /* RISULTATO */
+  .result-wrap { display:flex; flex-direction:column; gap:12px; }
+
+  .result-word-banner { background: #7F77DD !important; border-radius:16px; padding:18px 22px; text-align:center; }
+  .result-word-banner .rw-label { font-size:17px !important; font-weight:bold; color:#f0eeff !important; margin-bottom:4px; display:block; }
+  .result-word-banner .rw-word  { font-size:40px !important; font-weight:bold; color:#ffffff !important; letter-spacing:2px; display:block; }
+
+  .result-header { background:#EAF3DE !important; border:4px solid #3B6D11; border-radius:16px; padding:18px; text-align:center; }
+  .result-header .r-icon  { font-size:52px; margin-bottom:6px; display:block; }
+  .result-header .r-label { font-size:22px !important; color:#1a4a08 !important; font-weight:bold; display:block; }
+
+  .choices-list { display:flex; flex-direction:column; gap:10px; }
+  .choice-chip  { border-radius:14px; padding:16px 20px; border:3px solid #ccc; display:flex; align-items:center; gap:16px; }
+  .choice-chip .chip-img { font-size:34px; flex-shrink:0; }
+  .choice-chip .chip-val { font-size:24px !important; font-weight:bold; color:#111 !important; flex:1; }
+  .choice-chip .chip-sub { font-size:18px !important; margin-top:3px; color:#222 !important; }
+  .choice-chip .chip-badge { font-size:30px; flex-shrink:0; }
+
+  .chip-nome    { background:#EEEDFE !important; border-color:#7F77DD !important; }
+  .chip-verbo   { background:#E1F5EE !important; border-color:#0F6E56 !important; }
+  .chip-art     { background:#E6F1FB !important; border-color:#185FA5 !important; }
+  .chip-prep    { background:#FAEEDA !important; border-color:#BA7517 !important; }
+  .chip-agg     { background:#FBEAF0 !important; border-color:#993556 !important; }
+  .chip-neutral { background:#f0f0f0 !important; border-color:#bbb    !important; }
+  .chip-wrong   { background:#FFECEC !important; border-color:#E57373 !important; }
+
+  /* VERIFICA BOX */
+  .verifica-box { background:#ffffff !important; border:4px solid #45aaf2; border-radius:16px; padding:20px; }
+  .verifica-box .v-title { font-size:22px !important; font-weight:bold; color:#111 !important; margin-bottom:14px; text-align:center; display:block; }
+  .verifica-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:2px solid #ddd; }
+  .verifica-row:last-child { border-bottom:none; }
+  .verifica-row .v-label { font-size:18px !important; color:#333 !important; font-weight:bold; flex:1; }
+  .verifica-row .v-val   { font-size:20px !important; font-weight:bold; color:#111 !important; }
+  .verifica-row .v-ok    { font-size:28px; margin-left:6px; }
+
+  /* ANALISI CORRETTA */
+  .corretta-box { background:#EAF3DE !important; border:4px solid #3B6D11; border-radius:16px; padding:20px; }
+  .corretta-box .c-title { font-size:20px !important; font-weight:bold; color:#1a4a08 !important; margin-bottom:12px; text-align:center; display:block; }
+  .corretta-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:2px solid #c5e8c5; }
+  .corretta-row:last-child { border-bottom:none; }
+  .corretta-row .cr-label { font-size:16px !important; color:#2a5a2a !important; font-weight:bold; flex:1; }
+  .corretta-row .cr-val   { font-size:20px !important; font-weight:bold; color:#111 !important; }
+
+  /* LOADING */
+  .loading-box { background:#E6F1FB !important; border:4px solid #185FA5; border-radius:16px; padding:30px; text-align:center; }
+  .loading-box .l-icon { font-size:48px; display:block; margin-bottom:10px; animation: spin 1s linear infinite; }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  .loading-box .l-text { font-size:22px !important; font-weight:bold; color:#111 !important; }
+
+  .prep-box { background:#FAEEDA !important; border:4px solid #BA7517; border-radius:16px; padding:22px; text-align:center; }
+  .prep-box .prep-title { font-size:24px !important; font-weight:bold; color:#111 !important; margin-bottom:16px; display:block; }
+  .prep-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .prep-item { background:#fff8ee !important; border:2px solid #EF9F27; border-radius:14px; padding:14px 10px; text-align:center; }
+  .prep-item .prep-type  { font-size:18px !important; color:#111 !important; font-weight:bold; margin-bottom:8px; display:block; }
+  .prep-item .prep-words { font-size:20px !important; font-weight:bold; color:#111 !important; line-height:1.8; display:block; }
+
+  .restart-btn {
+    background:#3C3489 !important; border:none; border-radius:14px; padding:18px;
+    font-size:22px !important; font-weight:bold; cursor:pointer; color:#ffffff !important;
+    width:100%; display:flex; align-items:center; justify-content:center;
+    gap:10px; margin-top:4px; font-family:inherit;
+  }
+  .restart-btn:active { transform:scale(0.97); }
+  .credits { text-align:center; font-size:13px; color:#aaa !important; margin-top:32px; padding-bottom:16px; font-weight:bold; letter-spacing:1px; }
+</style>
+</head>
+<body>
+
+<div class="rainbow-header">
+  <span class="h-title">📝 ANALISI GRAMMATICALE</span>
+  <span class="h-sub">CREATO DA CHIARA ACCORDINI</span>
+</div>
+
+<div id="app">
+  <div class="word-input-box">
+    <label>✏️ PAROLA:</label>
+    <input type="text" id="wordInput" placeholder="SCRIVI LA PAROLA QUI..." autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>
+  <div id="audio-status"></div>
+  <div class="top-bar">
+    <button class="nav-btn" id="backBtn" onclick="goBack()">&#8592; INDIETRO</button>
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <button class="nav-btn fwd" id="fwdBtn" onclick="goForward()">AVANTI &#8594;</button>
+  </div>
+  <div id="screen"></div>
+  <div class="credits">CREATO DA CHIARA ACCORDINI</div>
+</div>
+
+<script>
+// ── CONFIG ──
+const EL_API_KEY  = 'sk_eeb3cc6d5bf68d8ed75d7c3ac05fa70ab51071b2b006f345';
+const EL_VOICE_ID = 'uV2Bhcm1HwmAqPqkbjfl';
+const EL_MODEL    = 'eleven_multilingual_v2';
+
+let currentAudio = null;
+
+async function speak(text) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  setStatus('🔊 ...');
+  try {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE_ID}`, {
+      method: 'POST',
+      headers: { 'xi-api-key': EL_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text, model_id: EL_MODEL,
+        voice_settings: { stability:0.6, similarity_boost:0.8, style:0.2 }
+      })
+    });
+    if (!res.ok) throw new Error();
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.onended = () => { setStatus(''); URL.revokeObjectURL(url); };
+    currentAudio.play();
+    setStatus('');
+  } catch {
+    setStatus('');
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'it-IT'; u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    }
+  }
+}
+function setStatus(m) { document.getElementById('audio-status').textContent = m; }
+
+// ── ALBERO ──
+const TREE = {
+  root: { title:"CHE COSA VUOI ANALIZZARE?", cols:2, options:[
+    { label:"NOME",         hint:"cosa è? chi è?", icon:"📚", cls:"btn-nome",  chipClass:"chip-nome",  next:"nome" },
+    { label:"VERBO",        hint:"azione!",         icon:"⚡", cls:"btn-verbo", chipClass:"chip-verbo", next:"verbo" },
+    { label:"ARTICOLO",     hint:"",   icon:"📄", cls:"btn-art",   chipClass:"chip-art",   next:"articolo" },
+    { label:"AGGETTIVO",    hint:"com'è?",           icon:"🌟", cls:"btn-agg",   chipClass:"chip-agg",   next:"aggettivo" },
+    { label:"PREPOSIZIONE", hint:"",         icon:"🔗", cls:"btn-prep",  chipClass:"chip-prep",  next:"preposizione" },
+  ]},
+  nome: { title:"IL NOME È...", cols:2, options:[
+    { label:"COMUNE",  hint:"per tutti",   icon:"🏠", cls:"btn-nome",  chipClass:"chip-nome",    next:"nome_comune" },
+    { label:"PROPRIO", hint:"solo uno!",   icon:"🧑", cls:"btn-muted", chipClass:"chip-neutral", next:"nome_genere" },
+  ]},
+  nome_comune: { title:"IL NOME COMUNE INDICA...", cols:3, options:[
+    { label:"ANIMALE", hint:"vive!",       icon:"🐶", cls:"btn-muted", chipClass:"chip-neutral", next:"nome_genere" },
+    { label:"COSA",    hint:"si tocca?",   icon:"🎁", cls:"btn-muted", chipClass:"chip-neutral", next:"nome_genere" },
+    { label:"PERSONA", hint:"è umano?",    icon:"👤", cls:"btn-muted", chipClass:"chip-neutral", next:"nome_genere" },
+  ]},
+  nome_genere: { title:"IL NOME È...", cols:2, options:[
+    { label:"MASCHILE",  hint:"",  icon:"♂", cls:"btn-nome",  chipClass:"chip-nome",    next:"nome_numero" },
+    { label:"FEMMINILE", hint:"",  icon:"♀", cls:"btn-muted", chipClass:"chip-neutral", next:"nome_numero" },
+  ]},
+  nome_numero: { title:"IL NOME È...", cols:2, options:[
+    { label:"SINGOLARE", hint:"uno solo!", icon:"1️⃣", cls:"btn-nome",  chipClass:"chip-nome",    next:"nome_tipo" },
+    { label:"PLURALE",   hint:"tanti!",   icon:"🔢", cls:"btn-muted", chipClass:"chip-neutral", next:"nome_tipo" },
+  ]},
+  nome_tipo: { title:"IL NOME È...", cols:2, options:[
+    { label:"CONCRETO", hint:"si tocca!", icon:"🎯", cls:"btn-nome",  chipClass:"chip-nome",    next:"nome_struttura" },
+    { label:"ASTRATTO", hint:"si sente!", icon:"🧠", cls:"btn-muted", chipClass:"chip-neutral", next:"nome_struttura" },
+  ]},
+  nome_struttura: { title:"IL NOME È...", cols:3, options:[
+    { label:"PRIMITIVO", hint:"radice!",   icon:"🍞", cls:"btn-nome",  chipClass:"chip-nome",    next:"result", img:"🍞" },
+    { label:"COMPOSTO",  hint:"2 parole!", icon:"🪛", cls:"btn-muted", chipClass:"chip-neutral", next:"result", img:"🪛" },
+    { label:"DERIVATO",  hint:"da un'altra!", icon:"👨‍🍳", cls:"btn-muted", chipClass:"chip-neutral", next:"result", img:"👨‍🍳" },
+  ]},
+  verbo: { title:"IL VERBO INDICA UN'AZIONE AL...", cols:3, options:[
+    { label:"PRESENTE", hint:"adesso!",  icon:"▶", cls:"btn-verbo", chipClass:"chip-verbo",   next:"result" },
+    { label:"PASSATO",  hint:"prima!",   icon:"◀", cls:"btn-muted", chipClass:"chip-neutral", next:"result" },
+    { label:"FUTURO",   hint:"poi!",     icon:"⏩", cls:"btn-verbo", chipClass:"chip-verbo",   next:"result" },
+  ]},
+  articolo: { title:"L'ARTICOLO È...", cols:2, options:[
+    { label:"DETERMINATIVO",   hint:"IL · LO · L' · I · GLI · LA · LE", icon:"📌", cls:"btn-art",   chipClass:"chip-art",     next:"art_genere_det" },
+    { label:"INDETERMINATIVO", hint:"UN · UNO · UNA · UN'",              icon:"📋", cls:"btn-muted", chipClass:"chip-neutral", next:"art_genere_indet" },
+  ]},
+  art_genere_det: { title:"L'ARTICOLO DETERMINATIVO È...", cols:2, options:[
+    { label:"MASCHILE",  hint:"IL · LO · L' · I · GLI", icon:"♂", cls:"btn-art",   chipClass:"chip-art",     next:"result" },
+    { label:"FEMMINILE", hint:"LA · L' · LE",            icon:"♀", cls:"btn-muted", chipClass:"chip-neutral", next:"result" },
+  ]},
+  art_genere_indet: { title:"L'ARTICOLO INDETERMINATIVO È...", cols:2, options:[
+    { label:"MASCHILE",  hint:"UN · UNO",  icon:"♂", cls:"btn-art",   chipClass:"chip-art",     next:"result" },
+    { label:"FEMMINILE", hint:"UNA · UN'", icon:"♀", cls:"btn-muted", chipClass:"chip-neutral", next:"result" },
+  ]},
+  aggettivo: { title:"L'AGGETTIVO È...", cols:2, options:[
+    { label:"QUALIFICATIVO", hint:"com'è?",    icon:"🌟", cls:"btn-agg",   chipClass:"chip-agg",     next:"agg_genere" },
+    { label:"POSSESSIVO",    hint:"di chi è?", icon:"👑", cls:"btn-muted", chipClass:"chip-neutral", next:"agg_genere" },
+    { label:"DIMOSTRATIVO",  hint:"quale?",    icon:"👉", cls:"btn-muted", chipClass:"chip-neutral", next:"agg_genere" },
+    { label:"NUMERALE",      hint:"quanti?",   icon:"🔢", cls:"btn-muted", chipClass:"chip-neutral", next:"agg_genere" },
+  ]},
+  agg_genere: { title:"L'AGGETTIVO È...", cols:2, options:[
+    { label:"MASCHILE",  hint:"",  icon:"♂", cls:"btn-agg",   chipClass:"chip-agg",     next:"agg_numero" },
+    { label:"FEMMINILE", hint:"",  icon:"♀", cls:"btn-muted", chipClass:"chip-neutral", next:"agg_numero" },
+  ]},
+  agg_numero: { title:"L'AGGETTIVO È...", cols:2, options:[
+    { label:"SINGOLARE", hint:"uno solo!", icon:"1️⃣", cls:"btn-agg",   chipClass:"chip-agg",     next:"result" },
+    { label:"PLURALE",   hint:"tanti!",   icon:"🔢", cls:"btn-muted", chipClass:"chip-neutral", next:"result" },
+  ]},
+  preposizione: { special:"preposizione" },
+  result:       { result:true }
+};
+
+let history=["root"], choices=[], future=[];
+
+function updateNav(){
+  document.getElementById("backBtn").style.display = history.length>1 ? "flex" : "none";
+  document.getElementById("fwdBtn").style.display  = future.length>0  ? "flex" : "none";
+  document.getElementById("breadcrumb").textContent = choices.filter(Boolean).map(c=>c.label).join(" › ");
+}
+
+function render(nodeId){
+  updateNav();
+  const node = TREE[nodeId];
+  const screen = document.getElementById("screen");
+  if(node.special==="preposizione"){ renderPrep(screen); return; }
+  if(node.result||nodeId==="result"){ renderResult(screen); return; }
+  const colClass = node.cols===3?"grid-3":"grid-2";
+  const cur = choices[history.length-1];
+  const btns = node.options.map(opt=>{
+    const sl=opt.label.replace(/'/g,"\\'");
+    const ss=(opt.sub||"").replace(/'/g,"\\'");
+    const si=(opt.img||"").replace(/'/g,"\\'");
+    const subH=opt.sub?`<span class="forms">${opt.sub}</span>`:""; const hintH=opt.hint?`<span class="hint">${opt.hint}</span>`:"";
+    const sel=cur&&cur.label===opt.label?" selected-choice":"";
+    return `<button class="btn ${opt.cls}${sel}" onclick="choose('${opt.next}','${sl}','${opt.chipClass}','${si}','${ss}');speak('${sl}')">
+      <span class="icon">${opt.icon}</span><span>${opt.label}</span>${hintH}${subH}
+    </button>`;
+  }).join("");
+  screen.innerHTML=`<div class="section-title">${node.title}</div><div class="grid ${colClass}">${btns}</div>`;
+}
+
+function renderPrep(screen){
+  speak("Preposizione");
+  screen.innerHTML=`
+    <div class="prep-box">
+      <span class="prep-title">🔗 LE PREPOSIZIONI</span>
+      <div class="prep-grid">
+        <div class="prep-item">
+          <span class="prep-type">SEMPLICI</span>
+          <span class="prep-words">DI · A · DA<br>IN · CON · SU<br>PER · TRA · FRA</span>
+        </div>
+        <div class="prep-item">
+          <span class="prep-type">ARTICOLATE</span>
+          <span class="prep-words" style="font-size:16px !important;">
+            DEL · DELLO · DELLA · DELL'<br>
+            DEI · DEGLI · DELLE<br>
+            AL · ALLO · ALLA · ALL'<br>
+            AI · AGLI · ALLE<br>
+            DAL · DALLO · DALLA · DALL'<br>
+            DAI · DAGLI · DALLE<br>
+            NEL · NELLO · NELLA · NELL'<br>
+            NEI · NEGLI · NELLE<br>
+            SUL · SULLO · SULLA · SULL'<br>
+            SUI · SUGLI · SULLE
+          </span>
+        </div>
+      </div>
+    </div>
+    <button class="restart-btn" onclick="restart()">↺ RICOMINCIA DA CAPO</button>`;
+}
+
+async function renderResult(screen){
+  const word = document.getElementById("wordInput").value.trim();
+  const wordUP = word.toUpperCase();
+
+  const wordBanner = word ? `
+    <div class="result-word-banner">
+      <span class="rw-label">LA PAROLA CHE HAI ANALIZZATO</span>
+      <span class="rw-word">${wordUP}</span>
+    </div>` : "";
+
+  const chips = choices.filter(Boolean).map(c=>{
+    const imgH=c.img?`<span class="chip-img">${c.img}</span>`:"";
+    const subH=c.sub?`<div class="chip-sub">${c.sub}</div>`:"";
+    return `<div class="choice-chip ${c.chipClass}">${imgH}<div><div class="chip-val">${c.label}</div>${subH}</div></div>`;
+  }).join("");
+
+  // Mostra schermata con scelte + loading verifica
+  screen.innerHTML=`
+    <div class="result-wrap">
+      ${wordBanner}
+      <div class="result-header">
+        <span class="r-icon">🎉</span>
+        <span class="r-label">ANALISI COMPLETATA!</span>
+      </div>
+      <div class="choices-list" id="chips-list">${chips}</div>
+      ${word ? `<div class="loading-box" id="loading-box">
+        <span class="l-icon">⏳</span>
+        <span class="l-text">CONTROLLO IN CORSO...</span>
+      </div>` : ""}
+      <button class="restart-btn" onclick="restart()">↺ RICOMINCIA DA CAPO</button>
+    </div>`;
+
+  const scelte = choices.filter(Boolean).map(c=>c.label).join(", ");
+  speak("Analisi completata. " + (word ? wordUP + ". " : "") + scelte);
+
+  // Se c'è una parola, chiedi a Claude di verificare
+  if(word) {
+    await verificaConClaude(word, choices.filter(Boolean));
+  }
+}
+
+async function verificaConClaude(word, scelte) {
+  const scelteTesto = scelte.map((c,i)=>`${i+1}. ${c.label}`).join("\n");
+
+  const prompt = `Sei un insegnante di italiano di scuola primaria (classe 4ª).
+La parola da analizzare è: "${word}"
+Le scelte dello studente sono:
+${scelteTesto}
+
+Analizza grammaticalmente la parola "${word}" al livello della classe 4ª primaria italiana.
+Considera tutte le interpretazioni valide (es. se una parola può essere nome o aggettivo, entrambe sono accettabili).
+Confronta le scelte dello studente con la tua analisi.
+
+Rispondi SOLO con un oggetto JSON, senza testo aggiuntivo, in questo formato:
+{
+  "analisi_corretta": [
+    {"categoria": "NOME/VERBO/ARTICOLO/AGGETTIVO/PREPOSIZIONE", "descrizione": "es. NOME COMUNE, MASCHILE, SINGOLARE, CONCRETO, PRIMITIVO"}
+  ],
+  "valutazione": [
+    {"scelta": "testo della scelta", "corretto": true/false, "nota": "breve nota se sbagliata, es: è FEMMINILE non MASCHILE"}
+  ],
+  "punteggio": numero da 0 a 100,
+  "messaggio": "messaggio di incoraggiamento breve per lo studente (max 10 parole)"
+}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const testo = data.content?.[0]?.text || "";
+    const clean = testo.replace(/```json|```/g,"").trim();
+    const parsed = JSON.parse(clean);
+    mostraVerifica(parsed, scelte);
+  } catch(e) {
+    document.getElementById("loading-box").innerHTML=`<span class="l-text">⚠️ VERIFICA NON DISPONIBILE</span>`;
+  }
+}
+
+function mostraVerifica(parsed, scelte) {
+  const loadingBox = document.getElementById("loading-box");
+  if(!loadingBox) return;
+
+  // Aggiorna i chip con ✅ o ❌
+  const chipsList = document.getElementById("chips-list");
+  if(chipsList && parsed.valutazione) {
+    const chips2 = scelte.map((c,i)=>{
+      const v = parsed.valutazione[i];
+      const ok = v ? v.corretto : true;
+      const badge = ok ? "✅" : "❌";
+      const nota = (!ok && v && v.nota) ? `<div style="font-size:15px;color:#c0392b !important;margin-top:4px;">${v.nota.toUpperCase()}</div>` : "";
+      const chipCls = ok ? c.chipClass : "chip-wrong";
+      const imgH = c.img ? `<span class="chip-img">${c.img}</span>` : "";
+      const subH = c.sub ? `<div class="chip-sub">${c.sub}</div>` : "";
+      return `<div class="choice-chip ${chipCls}">
+        ${imgH}
+        <div style="flex:1"><div class="chip-val">${c.label}</div>${subH}${nota}</div>
+        <span class="chip-badge">${badge}</span>
+      </div>`;
+    }).join("");
+    chipsList.innerHTML = chips2;
+  }
+
+  // Punteggio e messaggio
+  const punteggio = parsed.punteggio || 0;
+  const stelle = punteggio>=90?"⭐⭐⭐":punteggio>=60?"⭐⭐":"⭐";
+  const colore = punteggio>=90?"#3B6D11":punteggio>=60?"#BA7517":"#c0392b";
+
+  // Analisi corretta
+  const analisiRows = (parsed.analisi_corretta||[]).map(a=>
+    `<div class="corretta-row">
+      <span class="cr-label">${a.categoria||""}</span>
+      <span class="cr-val">${a.descrizione||""}</span>
+    </div>`).join("");
+
+  const msg = parsed.messaggio || "Ottimo lavoro!";
+
+  loadingBox.className = "corretta-box";
+  loadingBox.innerHTML = `
+    <span class="c-title">📖 ANALISI CORRETTA</span>
+    ${analisiRows}
+    <div style="margin-top:16px;text-align:center;background:#f0f8ff !important;border-radius:12px;padding:14px;border:3px solid #45aaf2;">
+      <div style="font-size:36px;margin-bottom:6px;">${stelle}</div>
+      <div style="font-size:26px;font-weight:bold;color:${colore} !important;">${punteggio}%</div>
+      <div style="font-size:20px;margin-top:6px;font-weight:bold;color:#111 !important;">${msg.toUpperCase()}</div>
+    </div>`;
+
+  // Leggi il feedback
+  const tutteOk = (parsed.punteggio||0) >= 90;
+  speak(tutteOk
+    ? "Bravissima! Tutto corretto! " + stelle
+    : "Quasi! " + msg);
+}
+
+function choose(nextId, label, chipClass, img, sub){
+  future=[];
+  choices[history.length-1]={label,chipClass,img,sub,nextId};
+  history.push(nextId);
+  choices[history.length-1]=undefined;
+  render(nextId);
+}
+function goBack(){
+  if(history.length<=1) return;
+  future.push({nodeId:history[history.length-1],choice:choices[history.length-1]});
+  history.pop();
+  render(history[history.length-1]);
+}
+function goForward(){
+  if(!future.length) return;
+  const n=future.pop();
+  history.push(n.nodeId);
+  if(n.choice) choices[history.length-1]=n.choice;
+  render(n.nodeId);
+}
+function restart(){
+  history=["root"]; choices=[]; future=[];
+  document.getElementById("wordInput").value="";
+  render("root");
+}
+
+render("root");
+</script>
+</body>
+</html>
